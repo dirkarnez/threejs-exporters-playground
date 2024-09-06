@@ -21,14 +21,14 @@
 		</style>
 
 <!-- Or by plain js https://medium.com/@necsoft/three-js-101-hello-world-part-1-443207b1ebe1 -->
-	<script type="importmap">
+	<!-- <script type="importmap">
 		{
 			"imports": {
 				"three": "https://unpkg.com/three@0.163.0/build/three.module.js",
 				"three/addons/": "https://unpkg.com/three@0.163.0/examples/jsm/"
 			}
 		}
-	</script>
+	</script> -->
 	<script type="importmap">
             {
                 "imports": {
@@ -44,6 +44,8 @@
 		import * as THREE from 'three';
 		import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 		import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+		import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
 		// or
 		//   import { OrbitControls } from 'https://unpkg.com/three@0.163.0/examples/jsm/controls/OrbitControls.js'
 		
@@ -74,6 +76,26 @@
 		
 		
 	
+		const link = document.createElement( 'a' );
+		link.style.display = 'none';
+		document.body.appendChild( link ); // Firefox workaround, see #6594
+
+		function save( blob, filename ) {
+			link.href = URL.createObjectURL( blob );
+			link.download = filename;
+			link.click();
+			// URL.revokeObjectURL( url ); breaks Firefox...
+		}
+
+		function saveString( text, filename ) {
+			save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+		}
+
+
+		function saveArrayBuffer( buffer, filename ) {
+			save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+		}
+
 
 		const orbit = new OrbitControls( camera, renderer.domElement );
 		orbit.enableZoom = true;
@@ -92,39 +114,83 @@
 		scene.add( lights[ 2 ] );
 	
 		
-		const group = new THREE.Group();
+		// const group = new THREE.Group();
 
-		const geometry = new THREE.BufferGeometry();
-		geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( [], 3 ) );
+		// const geometry = new THREE.BufferGeometry();
+		// geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( [], 3 ) );
 
-		const lineMaterial = new THREE.LineBasicMaterial( { color: 0xffffff, transparent: true, opacity: 0.5 } );
-		const meshMaterial = new THREE.MeshPhongMaterial( { color: 0x156289, emissive: 0x072534, side: THREE.DoubleSide, flatShading: true } );
+		// const lineMaterial = new THREE.LineBasicMaterial( { color: 0xffffff, transparent: true, opacity: 0.5 } );
+		// const meshMaterial = new THREE.MeshPhongMaterial( { color: 0x156289, emissive: 0x072534, side: THREE.DoubleSide, flatShading: true } );
 
-		group.add( new THREE.LineSegments( geometry, lineMaterial ) );
-		group.add( new THREE.Mesh( geometry, meshMaterial ) );
+		// group.add( new THREE.LineSegments( geometry, lineMaterial ) );
+		// group.add( new THREE.Mesh( geometry, meshMaterial ) );
 		
 	
 		
-		const data = {
-			width: 15,
-			height: 15,
-			depth: 15,
-			widthSegments: 1,
-			heightSegments: 1,
-			depthSegments: 1
-		};
+		// const data = {
+		// 	width: 15,
+		// 	height: 15,
+		// 	depth: 15,
+		// 	widthSegments: 1,
+		// 	heightSegments: 1,
+		// 	depthSegments: 1
+		// };
 		
-		group.children[ 0 ].geometry.dispose();
-		group.children[ 1 ].geometry.dispose();
+		// group.children[ 0 ].geometry.dispose();
+		// group.children[ 1 ].geometry.dispose();
 		
-		const boxGeometry = new THREE.BoxGeometry(data.width, data.height, data.depth, data.widthSegments, data.heightSegments, data.depthSegments);
+		// const boxGeometry = new THREE.BoxGeometry(data.width, data.height, data.depth, data.widthSegments, data.heightSegments, data.depthSegments);
 		
-		group.children[ 0 ].geometry = new THREE.WireframeGeometry( boxGeometry );
-		group.children[ 1 ].geometry = boxGeometry;
+		// group.children[ 0 ].geometry = new THREE.WireframeGeometry( boxGeometry );
+		// group.children[ 1 ].geometry = boxGeometry;
 	
-		scene.add(group);
+		// scene.add(group);
 
 		// // Add cube to Scene
+
+		const geoFloor = new THREE.PlaneGeometry( 50, 50 );
+		const matStdFloor = new THREE.MeshStandardMaterial( { color: 0xbcbcbc, roughness: 0.1, metalness: 0 } );
+		const mshStdFloor = new THREE.Mesh( geoFloor, matStdFloor );
+		mshStdFloor.rotation.x = - Math.PI / 2;
+		mshStdFloor.receiveShadow = true;
+		scene.add( mshStdFloor );
+
+
+		const exporter = new GLTFExporter();
+
+		// Parse the input and generate the glTF output
+		exporter.parse(
+			mshStdFloor,
+			// called when the gltf has been generated
+			function ( gltf ) {
+				console.log( gltf );
+				saveArrayBuffer( gltf, "export.glb" );
+
+			},
+			// called when there is an error in the generation
+			function ( error ) {
+
+				console.log( 'An error happened' );
+
+			},
+			{
+				trs: false, //Export position, rotation and scale instead of matrix per node. Default is false
+				onlyVisible: true,
+				binary: true
+			}
+		);
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 		// Render Loop
@@ -132,8 +198,8 @@
 			requestAnimationFrame(render);
 			
 
-			group.rotation.x += 0.005;
-			group.rotation.y += 0.005;
+			// group.rotation.x += 0.005;
+			// group.rotation.y += 0.005;
 
 
 			// Render the scene
